@@ -1,0 +1,79 @@
+
+# Circos Diagram for Maize, Rice, and Sorghum in order to show synteny
+
+#luminance = lum80
+
+karyotype = data/karyotype/karyotype.zeamays.txt
+
+
+#chromosomes_units = 1000000
+
+
+<<include ideogram.conf>>
+ 
+
+#<<include ticks.conf>>
+
+<image>
+<<include etc/image.conf>>                
+</image>
+
+<<include etc/colors_fonts_patterns.conf>> 
+<<include etc/housekeeping.conf>> 
+
+<links>
+
+<link>
+#Ribbon information for synteny between Soybean and Soybean
+file       = data/5/ribbon.14.txt
+radius = 0.99r
+crest  = 1
+ribbon           = yes
+flat             = yes
+#stroke_color     = blue
+#stroke_thickness = 2
+color            = black
+
+# Curves look best when this value is small (e.g. 0.1r or 0r)
+bezier_radius = 0.1r
+thickness     = 1
+
+<rules>
+
+
+<rule>
+condition  = 1
+color      = eval(sprintf("chr%s_a3",substr(var(chr2),2)))
+z          = eval(remap_int(var(size2),0,10e6,0,-100))
+</rule>
+</rules>
+
+</link>
+</links>
+
+<plots>
+<plot>
+type       = text
+#color      = black
+file = data/6/text.MaizePLATZ.txt
+
+r1   = 1r+200p
+r0   = 1r
+
+label_font = default
+label_size = 18p
+
+show_links     = yes
+link_dims      = 0p,0p,70p,0p,10p
+link_thickness = 2p
+link_color     = blue
+
+</plot>
+</plots>
+
+<image>
+<<include etc/image.conf>>
+# now override as necessary
+radius*           = 750p
+auto_alpha_steps* = 10
+</image>
