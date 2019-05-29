@@ -1,0 +1,120 @@
+setwd("E:\\Thesis\\Possible Program 1")
+library(RColorBrewer) 
+library(gplots) 
+library(Hmisc) 
+library(corrplot)
+library(reshape2)
+
+#read data
+
+maize_data <- read.table(“Ourdata.txt", h=T)# maize leaf data
+rice_data <- read.table(“Ricedata.txt", h=T) # rice leaf data
+
+
+log2_maize_data <- log2(maize_data+1)           
+log2_rice_data <- log2(rice_data+1) 
+
+#convert to matrix and Required to calculate distances 
+
+mat_log2_maize_data <- as.matrix(log2_maize_data)             
+mat_log2_rice_data <- as.matrix(log2_rice_data)  
+
+
+# Maize calculated distances
+dist_row = dist(mat_log2_maize_data, method = "euclidian")
+dist_col = dist(t(mat_log2_maize_data), method = "euclidian")
+
+## Rice calculated distances
+dist_rice_row = dist(mat_log2_rice_data, method = "euclidian")
+dist_rice_col = dist(t(mat_log2_rice_data), method = "euclidian")
+
+
+
+# Maize clustering
+cluster_row = hclust(dist_row, method = "average")
+cluster_col = hclust(dist_col, method = "single")
+
+## Rice clustering
+cluster_rice_row = hclust(dist_rice_row, method = "average")
+cluster_rice_col = hclust(dist_rice_col, method = "single")
+
+# Heatmap 
+
+my_palette <- colorRampPalette(c('black', 'dodgerblue3', 'gold2', 'red'))(299)
+colors =c(seq(0.0, 2, length=100), seq(2, 5, length=100), 
+           seq(5, 7, length=100), seq(7, 10, length=100))
+
+# heatmap Maize #
+
+hm_all <- heatmap.2(mat_log2_maize_data,
+                    margins =c(15,15), 
+                    col = my_palette, 
+                    #breaks=colors,
+                    density.info = "none",                                          
+                    trace= "none",
+                    scale="none",
+                    Rowv = as.dendrogram(cluster_row),
+                    Colv = as.dendrogram(cluster_col),
+                    main="Leaf Expression Data")
+
+# heatmap Rice #
+
+hm_all <- heatmap.2(mat_log2_rice_data,
+                      margins =c(15,15), 
+                      col = my_palette, 
+                      #breaks=colors,
+                      density.info = "none",                                          
+                      trace= "none",
+                      scale="none",
+                      Rowv = as.dendrogram(cluster_rice_row),
+                      Colv = as.dendrogram(cluster_rice_col),
+                      main="Leaf Expression Data")
+
+
+
+
+## calculated correlation matrix 
+# Maize
+cor_matrix <-rcorr(t(mat_log2_maize_data), type=c("spearman"))
+
+# Rice
+cor_matrix_rice <-rcorr(t(mat_log2_rice_data), type=c("spearman"))
+
+## to restructure data matrix
+melt_cor_matrix <-melt(cor_matrix$r)
+melt_cor_matrix_rice <-melt(cor_matrix_rice$r)
+
+
+#co-expression plot maize
+
+cor_matrix$r[is.na(cor_matrix$r)] <- 0  # to change NA values in maize matrix
+corrplot(cor_matrix$r, method="square", order="hclust", 
+         addgrid.col="white", tl.col="black", tl.srt=45, mar = c(0,0,1,0))
+
+# plot Rice
+corrplot(cor_matrix_rice$r , method="square", order="hclust", 
+         addgrid.col="white", tl.col="black", tl.srt=45, mar = c(0,0,1,0))
+
+
+# ++++++++++++++++++++++++++++
+# flattenCorrMatrix
+# ++++++++++++++++++++++++++++
+# cormat : matrix of the correlation coefficients
+# pmat : matrix of the correlation p-values
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+  )
+}
+
+#writes table for P-values 
+
+tabla_leaf_maize <- flattenCorrMatrix(cor_matrix$r, cor_matrix$P)
+tabla_leaf_rice <- flattenCorrMatrix(cor_matrix_rice$r, cor_matrix_rice$P)
+
+write.table(tabla_leaf_rice, "tabla_leaf_rice.csv", sep ="\t", quote = FALSE)
+write.table(tabla_leaf_maize, "tabla_leaf_maize.csv", sep ="\t", quote = FALSE)
